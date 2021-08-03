@@ -19,24 +19,37 @@ export async function getTweet(req, res) {
 }
 
 export async function createTweet(req, res) {
-  const { text, name, username } = req.body;
-  const tweet = await tweetRepository.create(text, name, username);
+  const tweet = await tweetRepository.create(req.body.text, req.userId);
   res.status(201).json(tweet);
 }
 
-export async function updateTweet(req, res, next) {
+export async function updateTweet(req, res) {
   const id = req.params.id;
   const text = req.body.text;
-  const tweet = await tweetRepository.update(id, text);
-  if (tweet) {
-    res.status(200).json(tweet);
-  } else {
-    res.status(404).json({ message: `Tweet id(${id}) not found` });
+  const tweet = await tweetRepository.getById(id);
+  if (!tweet) {
+    return res.sendStatus(404);
   }
+  if (req.userId !== tweet.userId) {
+    return res.sendStatus(403);
+  }
+
+  const updated = await tweetRepository.update(id, text);
+  res.status(200).json(updated);
 }
 
-export async function deleteTweet(req, res, next) {
+export async function deleteTweet(req, res) {
   const id = req.params.id;
+  const tweet = await tweetRepository.getById(id);
+  if (!tweet) {
+    return res.sendStatus(404);
+  }
+  if (req.userId !== tweet.userId) {
+    return res.sendStatus(403);
+  }
+  if (req.userId !== tweet.userId) {
+    return res.status(401).send({ message: "Authorization Error" });
+  }
   await tweetRepository.remove(id);
   res.sendStatus(204);
 }
