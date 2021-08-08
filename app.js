@@ -6,6 +6,7 @@ import "express-async-errors";
 import tweetsRouter from "./router/tweets.js";
 import authRouter from "./router/auth.js";
 import { config } from "./config.js";
+import { connectDB } from "./database/database.js";
 
 const app = express();
 
@@ -26,4 +27,9 @@ app.use((error, req, res) => {
   res.sendStatus(500);
 });
 
-app.listen(config.host.port);
+connectDB()
+  .then((client) => {
+    console.log(`connected to ${client.s.options.dbName} database`);
+    app.listen(config.host.port);
+  })
+  .catch(console.error);

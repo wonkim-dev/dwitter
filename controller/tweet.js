@@ -30,7 +30,7 @@ export async function updateTweet(req, res) {
   if (!tweet) {
     return res.sendStatus(404);
   }
-  if (req.userId !== tweet.userId) {
+  if (req.userId !== tweet.user_id) {
     return res.sendStatus(403);
   }
 
@@ -44,11 +44,8 @@ export async function deleteTweet(req, res) {
   if (!tweet) {
     return res.sendStatus(404);
   }
-  if (req.userId !== tweet.userId) {
+  if (req.userId !== tweet.user_id) {
     return res.sendStatus(403);
-  }
-  if (req.userId !== tweet.userId) {
-    return res.status(401).send({ message: "Authorization Error" });
   }
   await tweetRepository.remove(id);
   res.sendStatus(204);
