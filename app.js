@@ -28,8 +28,9 @@ app.use((error, req, res) => {
 });
 
 connectDB()
-  .then((client) => {
-    console.log(`connected to ${client.s.options.dbName} database`);
-    app.listen(config.host.port);
+  .then(() => {
+    app.listen(config.host.port, () => {
+      console.log("Server is up on port" + config.host.port);
+    });
   })
   .catch(console.error);
