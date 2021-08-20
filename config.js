@@ -23,4 +23,7 @@ export const config = {
   db: {
     host: required("DB_HOST"),
   },
+  cors: {
+    allowedOrigin: required("CORS_ALLOW_ORIGIN", "*"),
+  },
 };
