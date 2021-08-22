@@ -8,6 +8,7 @@ import tweetsRouter from "./router/tweets.js";
 import authRouter from "./router/auth.js";
 import { config } from "./config.js";
 import { connectDB } from "./database/database.js";
+import { csrfCheck } from "./middleware/csrf.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(helmet());
 app.use(cors(corsOption));
 app.use(morgan("tiny"));
 
+app.use(csrfCheck);
 app.use("/tweets", tweetsRouter);
 app.use("/auth", authRouter);
 

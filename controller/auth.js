@@ -70,3 +70,12 @@ function setToken(res, token) {
   };
   res.cookie("token", token, options);
 }
+
+export async function csrfToken(req, res, next) {
+  const csrfToken = await generateCSRFToken();
+  res.status(200).json({ csrfToken });
+}
+
+async function generateCSRFToken() {
+  return bcrypt.hash(congif.csrf.plainToken, 1);
+}
