@@ -77,5 +77,5 @@ export async function csrfToken(req, res, next) {
 }
 
 async function generateCSRFToken() {
-  return bcrypt.hash(congif.csrf.plainToken, 1);
+  return bcrypt.hash(config.csrf.plainToken, 1);
 }
