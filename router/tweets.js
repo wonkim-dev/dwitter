@@ -7,7 +7,7 @@ import { validate } from "../middleware/validator.js";
 
 const router = express.Router();
 
-const validateTweet = [
+const validateText = [
   body("text")
     .trim()
     .isLength({ min: 3 })
@@ -19,10 +19,17 @@ router.get("/", isAuth, tweetController.getTweets);
 
 router.get("/:id", isAuth, tweetController.getTweet);
 
-router.post("/", isAuth, validateTweet, tweetController.createTweet);
+router.post("/", isAuth, validateText, tweetController.createTweet);
 
-router.put("/:id", isAuth, validateTweet, tweetController.updateTweet);
+router.put("/:id", isAuth, validateText, tweetController.updateTweet);
 
 router.delete("/:id", isAuth, tweetController.deleteTweet);
+
+router.post(
+  "/:id/comments",
+  isAuth,
+  validateText,
+  tweetController.createComment
+);
 
 export default router;

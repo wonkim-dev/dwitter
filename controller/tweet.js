@@ -50,3 +50,16 @@ export async function deleteTweet(req, res) {
   await tweetRepository.remove(id);
   res.sendStatus(204);
 }
+
+export async function createComment(req, res) {
+  const tweet = await tweetRepository.getById(req.params.id);
+  if (!tweet) {
+    return res.sendStatus(400);
+  }
+  const updated = await tweetRepository.addComment(
+    req.userId,
+    req.params.id,
+    req.body.text
+  );
+  res.status(200).json(updated);
+}

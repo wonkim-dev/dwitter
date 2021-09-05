@@ -8,6 +8,15 @@ const tweetSchema = Mongoose.Schema(
     userId: { type: String, required: true },
     name: { type: String, required: true },
     username: { type: String, required: true },
+    comments: [
+      {
+        text: { type: String, require: true },
+        userId: { type: String, require: true },
+        username: { type: String, require: true },
+        url: String,
+        createdAt: Date,
+      },
+    ],
     url: String,
   },
   { timestamps: true }
@@ -46,4 +55,24 @@ export async function update(id, text) {
 
 export async function remove(id) {
   return Tweet.findByIdAndDelete(id);
+}
+
+export async function addComment(userId, tweetId, text) {
+  return userRepository.findById(userId).then((user) => {
+    return Tweet.findByIdAndUpdate(
+      tweetId,
+      {
+        $push: {
+          comments: {
+            text,
+            userId,
+            username: user.username,
+            url: user.url,
+            createdAt: new Date(),
+          },
+        },
+      },
+      { returnOriginal: false }
+    );
+  });
 }
