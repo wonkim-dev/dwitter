@@ -39,4 +39,10 @@ router.put(
   tweetController.updateComment
 );
 
+router.delete(
+  "/:id/comments/:commentId",
+  isAuth,
+  tweetController.deleteComment
+);
+
 export default router;

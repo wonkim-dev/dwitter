@@ -76,3 +76,15 @@ export async function updateComment(req, res) {
   );
   res.status(200).json(comment);
 }
+
+export async function deleteComment(req, res) {
+  const tweet = await tweetRepository.getById(req.params.id);
+  if (!tweet) {
+    return res.sendStatus(400);
+  }
+  const deleted = await tweetRepository.deleteCommentById(
+    req.params.id,
+    req.params.commentId
+  );
+  res.status(200).json(deleted);
+}

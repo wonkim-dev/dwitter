@@ -91,3 +91,19 @@ export async function updateCommentById(id, commentId, text) {
     { returnOriginal: false }
   );
 }
+
+export async function deleteCommentById(id, commentId) {
+  return Tweet.findOneAndUpdate(
+    {
+      _id: Mongoose.Types.ObjectId(id),
+    },
+    {
+      $pull: {
+        comments: {
+          _id: Mongoose.Types.ObjectId(commentId),
+        },
+      },
+    },
+    { returnOriginal: false }
+  );
+}
