@@ -32,4 +32,11 @@ router.post(
   tweetController.createComment
 );
 
+router.put(
+  "/:id/comments/:commentId",
+  isAuth,
+  validateText,
+  tweetController.updateComment
+);
+
 export default router;

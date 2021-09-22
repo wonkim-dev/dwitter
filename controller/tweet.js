@@ -63,3 +63,16 @@ export async function createComment(req, res) {
   );
   res.status(200).json(updated);
 }
+
+export async function updateComment(req, res) {
+  const tweet = await tweetRepository.getById(req.params.id);
+  if (!tweet) {
+    return res.sendStatus(400);
+  }
+  const comment = await tweetRepository.updateCommentById(
+    req.params.id,
+    req.params.commentId,
+    req.body.text
+  );
+  res.status(200).json(comment);
+}

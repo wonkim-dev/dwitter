@@ -76,3 +76,18 @@ export async function addComment(userId, tweetId, text) {
     );
   });
 }
+
+export async function updateCommentById(id, commentId, text) {
+  return Tweet.findOneAndUpdate(
+    {
+      _id: Mongoose.Types.ObjectId(id),
+      "comments._id": Mongoose.Types.ObjectId(commentId),
+    },
+    {
+      $set: {
+        "comments.$.text": text,
+      },
+    },
+    { returnOriginal: false }
+  );
+}
