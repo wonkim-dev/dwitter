@@ -12,26 +12,26 @@ Diwitter is a backend project that provides APIs for social media application. T
 ## Folder Structure
 
     root
-    ├── router
+    ├── router                  # responsible for accepting incoming requests
+    |      ├── auth.js          # handles authentication-related requests
+    |      └── tweets.js        # handles tweet-related requests
+    |
+    ├── controller              # responsible for processing requests, validation and data storage
+    |      ├── auth.js          # processes sign-in, log-in, log-out and user authentication
+    |      └── tweets.js        # creates, deletes, updates, retrieves tweets and comments
+    |
+    ├── data                    # responsible for data query and manipulation
     |      ├── auth.js
     |      └── tweets.js
     |
-    ├── controller
-    |      ├── auth.js
-    |      └── tweets.js
-    |
-    ├── data
-    |      ├── auth.js
-    |      └── tweets.js
-    |
-    ├── database
+    ├── database                # responsible for connecting to database
     |      └── database.js
     |
-    ├── middleware  
-    |      ├── auth.js
-    |      ├── csrf.js
-    |      ├── rate-limiter.js
-    |      └── validator.js
+    ├── middleware              # contains middleware
+    |      ├── auth.js          # authenticates users by JWT
+    |      ├── csrf.js          # validates CSRF token for non-reading reguests
+    |      ├── rate-limiter.js  # applies express-rate-limit
+    |      └── validator.js     # checks the results of express-validator for user input
     | 
     └── app.js
 
