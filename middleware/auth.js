@@ -7,7 +7,7 @@ const AUTH_ERROR = { message: "Authentication Error" };
 export const isAuth = async (req, res, next) => {
   let token;
 
-  // Check the header (non-browser clinets)
+  // Check the header (non-browser clients)
   const authHeader = req.get("Authorization");
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.split(" ")[1];

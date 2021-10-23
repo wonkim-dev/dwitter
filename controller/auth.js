@@ -66,7 +66,7 @@ function setToken(res, token) {
     maxAge: config.jwt.expiresInSec * 1000,
     httpOnly: true,
     sameSite: "none",
-    secure: true,
+    secure: false, // set true in production environment
   };
   res.cookie("token", token, options);
 }

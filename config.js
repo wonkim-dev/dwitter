@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-function required(key, defaultVFalue = undefined) {
-  const value = process.env[key] || defaultVFalue;
+function required(key, defaultValue = undefined) {
+  const value = process.env[key] || defaultValue;
   if (!value) {
     throw new Error(`Key ${key} is undefined`);
   }

@@ -38,6 +38,6 @@ export const csrfCheck = (req, res, next) => {
     });
 };
 
-async function validateCsrfToken(csrfheader) {
-  return bcrypt.compare(config.csrf.plainToken, csrfheader);
+async function validateCsrfToken(csrfHeader) {
+  return bcrypt.compare(config.csrf.plainToken, csrfHeader);
 }
