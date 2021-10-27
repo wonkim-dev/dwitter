@@ -22,6 +22,7 @@ export const config = {
   },
   db: {
     host: required("DB_HOST"),
+    hostTest: required("DB_HOST_TEST"),
   },
   cors: {
     allowedOrigin: required("CORS_ALLOW_ORIGIN", "*"),

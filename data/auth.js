@@ -10,7 +10,7 @@ const userSchema = new Mongoose.Schema({
 });
 
 useVirtualId(userSchema);
-const User = Mongoose.model("User", userSchema);
+export const User = Mongoose.model("User", userSchema);
 
 export async function createUser(user) {
   return new User(user).save().then((data) => data.id);
