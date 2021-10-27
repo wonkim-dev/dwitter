@@ -253,7 +253,7 @@ This updates a comment in a selected tweet.
     }
 
 #### Response
-
+ jest
 Updated tweet-object with new comment is returned.
 
     {
@@ -283,3 +283,8 @@ Updated tweet-object with new comment is returned.
 ### `DELETE tweets/:id/comments/:commentId`
 
 This deletes a comment by comment id. Updated tweet-object is returned.
+
+## Features to be done
+
+- Testing with Jest (in progress)
+- Conversion from JavaScript to TypeScript
