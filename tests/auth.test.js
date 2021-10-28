@@ -1,6 +1,10 @@
 import request from "supertest";
-import { app } from "../app-test.js";
+import Mongoose from "mongoose";
+import { app } from "../app.js";
 import * as userRepository from "../data/auth.js";
+import { connectDB } from "../database/database.js";
+
+await connectDB(true);
 
 const userOne = {
   username: "firstUser",
@@ -13,27 +17,54 @@ let userOneCSRFToken;
 let userOneJWTtoken;
 
 // Empty the users collection before testing
-beforeEach(async () => {
+beforeAll(async () => {
   await userRepository.User.deleteMany();
 });
 
-test("Should get CSRF Token", async () => {
-  const response = await request(app)
-    .get("/auth/csrf-token")
-    .send()
-    .expect(200);
-  expect(response.body.csrfToken).not.toBeFalsy();
-  userOneCSRFToken = response.body.csrfToken;
+describe("GET /auth/csrf-token", () => {
+  test("Should get CSRF Token", async () => {
+    const response = await request(app)
+      .get("/auth/csrf-token")
+      .send()
+      .expect(200);
+    expect(response.body.csrfToken).not.toBeFalsy();
+    userOneCSRFToken = response.body.csrfToken;
+  });
 });
 
-test("Should create a user via browser", async () => {
-  const response = await request(app)
-    .post("/auth/signup")
-    .set("dwitter-csrf-token", userOneCSRFToken)
-    .send(userOne)
-    .expect(201);
-  expect(response.body.token).not.toBeFalsy();
-  expect(response.body.username).toBe("firstUser");
-  userOneUsername = response.body.username;
-  userOneJWTtoken = response.body.token;
+describe("POST /auth/signup", () => {
+  test("Should create a user via browser", async () => {
+    const response = await request(app)
+      .post("/auth/signup")
+      .set("dwitter-csrf-token", userOneCSRFToken)
+      .send(userOne)
+      .expect(201);
+    expect(response.body.token).not.toBeFalsy();
+    expect(response.body.username).toBe("firstUser");
+    userOneJWTtoken = response.body.token;
+  });
+
+  test("Should fail to create a user with existing username", async () => {
+    const response = await request(app)
+      .post("/auth/signup")
+      .set("dwitter-csrf-token", userOneCSRFToken)
+      .send(userOne)
+      .expect(409);
+    expect(response.body.message).toBe(`${userOne.username} already exists`);
+  });
+});
+
+describe("GET /auth/me", () => {
+  test("Should get me", async () => {
+    await request(app)
+      .get("/auth/me")
+      .set("Cookie", [`token=${userOneJWTtoken}`])
+      .send()
+      .expect(200);
+  });
+});
+
+// Disconnect DB
+afterAll(async () => {
+  await Mongoose.connection.close();
 });

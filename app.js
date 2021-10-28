@@ -11,7 +11,7 @@ import { connectDB } from "./database/database.js";
 import { csrfCheck } from "./middleware/csrf.js";
 import rateLimit from "./middleware/rate-limiter.js";
 
-const app = express();
+export const app = express();
 
 const corsOption = {
   origin: config.cors.allowedOrigin,
@@ -38,11 +38,3 @@ app.use((error, req, res) => {
   console.error(error);
   res.sendStatus(500);
 });
-
-connectDB()
-  .then(() => {
-    app.listen(config.host.port, () => {
-      console.log("Server is up on port" + config.host.port);
-    });
-  })
-  .catch(console.error);
