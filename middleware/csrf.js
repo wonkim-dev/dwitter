@@ -17,7 +17,7 @@ export const csrfCheck = (req, res, next) => {
       "Missing required 'dwitter-csrf-token' header.",
       req.headers.origin
     );
-    return res.status(403).json({ message: "failed CSRF check" });
+    return res.status(403).json({ message: "Failed CSRF check" });
   }
 
   validateCsrfToken(csrfHeader) //
