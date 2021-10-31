@@ -1,189 +1,255 @@
 import request from "supertest";
 import Mongoose from "mongoose";
 import { app } from "../app.js";
-import * as userRepository from "../data/auth.js";
 import { connectDB } from "../database/database.js";
+import {
+  initializeDBForAuthTest,
+  CSRFToken,
+  userOne,
+  userOneToken,
+} from "./fixtures/db.js";
 
-await connectDB(true);
+// Connect to testDB
+connectDB(true);
 
-const userOne = {
-  username: "firstUser",
-  password: "alskej2@!",
-  name: "First User",
-  email: "firstuser@email.com",
-  url: "https://images.pexels.com/photos/668435/pexels-photo-668435.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+const dummyUser = {
+  username: "dummyUser",
+  password: "passwordDummy",
+  name: "Dummy User",
+  email: "dummyuser@email.com",
+  url: "",
 };
-let userOneCSRFToken;
-let userOneJWTtoken;
 
-// Empty the users collection before testing
-beforeAll(async () => {
-  await userRepository.User.deleteMany();
+// Initialize users collection before each test
+beforeEach(async () => {
+  await initializeDBForAuthTest();
 });
 
-describe("test /auth", () => {
-  describe("GET /auth/csrf-token", () => {
-    test("Should get CSRF Token", async () => {
-      const response = await request(app)
-        .get("/auth/csrf-token")
-        .send()
-        .expect(200);
-      expect(response.body.csrfToken).not.toBeFalsy();
-      userOneCSRFToken = response.body.csrfToken;
-    });
+describe("GET /auth/csrf-token", () => {
+  test("Should get CSRF Token", async () => {
+    const response = await request(app)
+      .get("/auth/csrf-token")
+      .send()
+      .expect(200);
+    expect(response.body.csrfToken).toBeTruthy();
   });
+});
 
-  describe("POST /auth/signup", () => {
-    describe("Signup with incomplete data", () => {
-      test("Should fail to create a user with empty username", async () => {
-        await request(app)
-          .post("/auth/signup")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send(Object.assign({}, userOne, { username: null }))
-          .expect(400);
-      });
-
-      test("Should fail to create a user with empty password", async () => {
-        await request(app)
-          .post("/auth/signup")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send(Object.assign({}, userOne, { password: null }))
-          .expect(400);
-      });
-
-      test("Should fail to create a user with empty name", async () => {
-        await request(app)
-          .post("/auth/signup")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send(Object.assign({}, userOne, { name: null }))
-          .expect(400);
-      });
-
-      test("Should fail to create a user with empty email", async () => {
-        await request(app)
-          .post("/auth/signup")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send(Object.assign({}, userOne, { email: null }))
-          .expect(400);
-      });
-    });
-
-    test("Should create a user via browser successfully", async () => {
-      const response = await request(app)
-        .post("/auth/signup")
-        .set("dwitter-csrf-token", userOneCSRFToken)
-        .send(userOne)
-        .expect(201);
-      expect(response.body.token).not.toBeFalsy();
-      expect(response.body.username).toBe("firstUser");
-      userOneJWTtoken = response.body.token;
-    });
-
-    test("Should fail to create a user with existing username", async () => {
-      const response = await request(app)
-        .post("/auth/signup")
-        .set("dwitter-csrf-token", userOneCSRFToken)
-        .send(userOne)
-        .expect(409);
-      expect(response.body.message).toBe(`${userOne.username} already exists`);
-    });
-  });
-
-  describe("GET /auth/me", () => {
-    test("Should fail to get me with wrong JWT token", async () => {
+describe("GET /auth/me", () => {
+  describe("Request with correct credentials", () => {
+    test("Should get me successfully (browser clients)", async () => {
       const response = await request(app)
         .get("/auth/me")
-        .set("Cookie", ["token="])
+        .set("Cookie", [`token=${userOneToken}`])
+        .send()
+        .expect(200);
+      expect(response.body).toEqual({
+        token: userOneToken,
+        username: userOne.username,
+      });
+    });
+
+    test("Should get me successfully (non-browser clients)", async () => {
+      const response = await request(app)
+        .get("/auth/me")
+        .set("Authorization", `Bearer ${userOneToken}`)
+        .send()
+        .expect(200);
+      expect(response.body).toEqual({
+        token: userOneToken,
+        username: userOne.username,
+      });
+    });
+  });
+
+  describe("Request with invalid credentials", () => {
+    test("Should fail to get me with invalid JWT token (browser clients)", async () => {
+      const response = await request(app)
+        .get("/auth/me")
+        .set("Cookie", ["token=invalidToken"])
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
     });
 
-    test("Should get me successfully", async () => {
-      await request(app)
-        .get("/auth/me")
-        .set("Cookie", [`token=${userOneJWTtoken}`])
-        .send()
-        .expect(200);
-    });
-  });
-
-  describe("POST /auth/logout", () => {
-    test("should logout successfully", async () => {
+    test("Should fail to get me with invalid JWT token (non-browser clients)", async () => {
       const response = await request(app)
-        .post("/auth/logout")
-        .set("dwitter-csrf-token", userOneCSRFToken)
+        .get("/auth/me")
+        .set("Authorization", "Bearer invalidToken")
         .send()
-        .expect(200);
-      expect(response.body).toEqual({ message: "User has been logged out" });
+        .expect(401);
+      expect(response.body).toEqual({ message: "Authentication Error" });
+    });
+
+    test("Should fail to get me with missing token field in request header", async () => {
+      const response = await request(app).get("/auth/me").send().expect(401);
+      expect(response.body).toEqual({ message: "Authentication Error" });
+    });
+  });
+});
+
+describe("POST /auth/signup", () => {
+  describe("Signup with correct data", () => {
+    test("Should create a user successfully", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(dummyUser)
+        .expect(201);
+      expect(response.body.token).toBeTruthy();
+      expect(response.body.username).toBe(dummyUser.username);
     });
   });
 
-  describe("POST /auth/login", () => {
-    describe("Login with wrong info", () => {
-      test("Should fail to login with non-existing username", async () => {
-        const response = await request(app)
-          .post("/auth/login")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send({
-            username: "wrongUsername",
-            password: "alskej2@!",
-          })
-          .expect(401);
-        expect(response.body).toEqual({ message: "invalid user or password" });
-      });
-
-      test("Should fail to login with wrong password", async () => {
-        const response = await request(app)
-          .post("/auth/login")
-          .set("dwitter-csrf-token", userOneCSRFToken)
-          .send({
-            username: "firstUser",
-            password: "wrongPassword",
-          })
-          .expect(401);
-        expect(response.body).toEqual({ message: "invalid user or password" });
-      });
-
-      test("Should fail to login without CSRF token", async () => {
-        const response = await request(app)
-          .post("/auth/login")
-          .send({
-            username: "firstUser",
-            password: "alskej2@!",
-          })
-          .expect(403);
-        expect(response.body).toEqual({ message: "Failed CSRF check" });
-      });
-
-      test("Should fail to login with invalid CSRF token", async () => {
-        const response = await request(app)
-          .post("/auth/login")
-          .set("dwitter-csrf-token", "wrongCSRFToken")
-          .send({
-            username: "firstUser",
-            password: "alskej2@!",
-          })
-          .expect(403);
-        expect(response.body).toEqual({ message: "Failed CSRF check" });
+  describe("Signup with incomplete data", () => {
+    test("Should fail to create a user with empty username", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(Object.assign({}, dummyUser, { username: null }))
+        .expect(400);
+      expect(response.body).toEqual({
+        message: "username should be between 6 and 15 characters",
       });
     });
 
+    test("Should fail to create a user with empty password", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(Object.assign({}, dummyUser, { password: null }))
+        .expect(400);
+      expect(response.body).toEqual({
+        message: "password should be at least 5 characters",
+      });
+    });
+
+    test("Should fail to create a user with empty name", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(Object.assign({}, dummyUser, { name: null }))
+        .expect(400);
+      expect(response.body).toEqual({
+        message: "name is missing",
+      });
+    });
+
+    test("Should fail to create a user with empty email", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(Object.assign({}, dummyUser, { email: null }))
+        .expect(400);
+      expect(response.body).toEqual({
+        message: "invalid email",
+      });
+    });
+
+    test("Should fail to create a user with existing username", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send(Object.assign({}, dummyUser, { username: userOne.username }))
+        .expect(409);
+      expect(response.body).toEqual({
+        message: `${userOne.username} already exists`,
+      });
+    });
+  });
+});
+
+describe("POST /auth/login", () => {
+  describe("Login with correct credentials", () => {
     test("Should log in successfully", async () => {
       const response = await request(app)
         .post("/auth/login")
-        .set("dwitter-csrf-token", userOneCSRFToken)
+        .set("dwitter-csrf-token", CSRFToken)
         .send({
-          username: "firstUser",
-          password: "alskej2@!",
+          username: userOne.username,
+          password: userOne.password,
         })
         .expect(200);
-      response.body.username = "firstUser";
+      expect(response.body.username).toBe(userOne.username);
     });
+  });
+
+  describe("Login with invalid credentials", () => {
+    test("Should fail to login with non-existing username", async () => {
+      const response = await request(app)
+        .post("/auth/login")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send({
+          username: "wrongUsername",
+          password: userOne.password,
+        })
+        .expect(401);
+      expect(response.body).toEqual({ message: "invalid user or password" });
+    });
+
+    test("Should fail to login with wrong password", async () => {
+      const response = await request(app)
+        .post("/auth/login")
+        .set("dwitter-csrf-token", CSRFToken)
+        .send({
+          username: userOne.username,
+          password: "wrongPassword",
+        })
+        .expect(401);
+      expect(response.body).toEqual({ message: "invalid user or password" });
+    });
+
+    test("Should fail to login without dwitter-csrf-token field in request header", async () => {
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          username: userOne.username,
+          password: userOne.password,
+        })
+        .expect(403);
+      expect(response.body).toEqual({ message: "Failed CSRF check" });
+    });
+
+    test("Should fail to login with invalid CSRF token", async () => {
+      const response = await request(app)
+        .post("/auth/login")
+        .set("dwitter-csrf-token", "wrongCSRFToken")
+        .send({
+          username: userOne.username,
+          password: userOne.password,
+        })
+        .expect(403);
+      expect(response.body).toEqual({ message: "Failed CSRF check" });
+    });
+  });
+});
+
+describe("POST /auth/logout", () => {
+  test("should logout successfully", async () => {
+    const response = await request(app)
+      .post("/auth/logout")
+      .set("dwitter-csrf-token", CSRFToken)
+      .send()
+      .expect(200);
+    expect(response.body).toEqual({ message: "User has been logged out" });
+  });
+
+  test("should fail to logout without dwitter-csrf-token field in request header", async () => {
+    const response = await request(app).post("/auth/logout").send().expect(403);
+    expect(response.body).toEqual({ message: "Failed CSRF check" });
+  });
+
+  test("should fail to logout with invalid CSRF token", async () => {
+    const response = await request(app)
+      .post("/auth/logout")
+      .set("dwitter-csrf-token", "wrongCSRFToken")
+      .send()
+      .expect(403);
+    expect(response.body).toEqual({ message: "Failed CSRF check" });
   });
 });
 
 // Disconnect DB
 afterAll(async () => {
-  await Mongoose.connection.close();
+  Mongoose.connection.close();
 });
