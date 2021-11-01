@@ -54,7 +54,7 @@ export async function deleteTweet(req, res) {
 export async function createComment(req, res) {
   const tweet = await tweetRepository.getById(req.params.id);
   if (!tweet) {
-    return res.sendStatus(400);
+    return res.sendStatus(404);
   }
   const updated = await tweetRepository.addComment(
     req.userId,
@@ -67,7 +67,7 @@ export async function createComment(req, res) {
 export async function updateComment(req, res) {
   const tweet = await tweetRepository.getById(req.params.id);
   if (!tweet) {
-    return res.sendStatus(400);
+    return res.sendStatus(404);
   }
   const comment = await tweetRepository.updateCommentById(
     req.params.id,
@@ -80,7 +80,7 @@ export async function updateComment(req, res) {
 export async function deleteComment(req, res) {
   const tweet = await tweetRepository.getById(req.params.id);
   if (!tweet) {
-    return res.sendStatus(400);
+    return res.sendStatus(404);
   }
   const deleted = await tweetRepository.deleteCommentById(
     req.params.id,

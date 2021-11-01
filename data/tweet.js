@@ -23,7 +23,7 @@ const tweetSchema = Mongoose.Schema(
 );
 
 useVirtualId(tweetSchema);
-const Tweet = Mongoose.model("Tweet", tweetSchema);
+export const Tweet = Mongoose.model("Tweet", tweetSchema);
 
 export async function getAll() {
   return Tweet.find().sort({ createdAt: -1 }).limit(20);
@@ -34,6 +34,9 @@ export async function getAllByUsername(username) {
 }
 
 export async function getById(id) {
+  if (!Mongoose.Types.ObjectId.isValid(id)) {
+    return false;
+  }
   return Tweet.findById(id);
 }
 
