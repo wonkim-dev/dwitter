@@ -57,6 +57,11 @@ export async function initializeDBForTweetTest() {
     "This is the first Tweet.",
     userOneId
   );
+  tweetOne = await tweetRepository.addComment(
+    userOneId,
+    tweetOne.id,
+    "Comment One"
+  );
   tweetTwo = await tweetRepository.create(
     "this is the second Tweet.",
     userTwoId

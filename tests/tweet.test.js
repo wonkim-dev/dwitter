@@ -10,6 +10,7 @@ import {
   tweetOne,
   userTwo,
   userTwoToken,
+  userOneId,
 } from "./fixtures/db.js";
 
 // Connect to testDB
@@ -298,6 +299,62 @@ describe("DELETE /tweets/:id", () => {
         .set("Cookie", [`token=${userOneToken}`])
         .send()
         .expect(404);
+    });
+  });
+});
+
+describe("POST tweets/:id/comments", () => {
+  describe("Request with valid credentials", () => {
+    test("Should create a new comment (browser clients)", async () => {
+      const response = await request(app)
+        .post(`/tweets/${tweetOne.id}/comments`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "This is new comment!" })
+        .expect(200);
+      expect(response.body).toHaveProperty("id", tweetOne.id);
+      expect(response.body).toHaveProperty("username", userOne.username);
+      expect(response.body.comments).toHaveLength(2);
+      expect(response.body.comments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: "Comment One",
+            userId: userOneId,
+            username: userOne.username,
+          }),
+          expect.objectContaining({
+            text: "This is new comment!",
+            userId: userOneId,
+            username: userOne.username,
+          }),
+        ])
+      );
+    });
+
+    test("Should create a new comment (non-browser clients)", async () => {
+      const response = await request(app)
+        .post(`/tweets/${tweetOne.id}/comments`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Authorization", `Bearer ${userOneToken}`)
+        .send({ text: "This is new comment!" })
+        .expect(200);
+      expect(response.body).toHaveProperty("id", tweetOne.id);
+      expect(response.body).toHaveProperty("username", userOne.username);
+      expect(response.body.comments).toHaveLength(2);
+      expect(response.body.comments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: "Comment One",
+            userId: userOneId,
+            username: userOne.username,
+          }),
+          expect.objectContaining({
+            text: "This is new comment!",
+            userId: userOneId,
+            username: userOne.username,
+          }),
+        ])
+      );
     });
   });
 });
