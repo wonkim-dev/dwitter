@@ -34,9 +34,6 @@ export async function getAllByUsername(username) {
 }
 
 export async function getById(id) {
-  if (!Mongoose.Types.ObjectId.isValid(id)) {
-    return false;
-  }
   return Tweet.findById(id);
 }
 
@@ -109,4 +106,14 @@ export async function deleteCommentById(id, commentId) {
     },
     { returnOriginal: false }
   );
+}
+
+export function getCommentById(tweet, commentId) {
+  return tweet.comments.filter((comment) => {
+    return Mongoose.Types.ObjectId(comment._id).toString() === commentId;
+  })[0];
+}
+
+export function validateObjectId(objectId) {
+  return Mongoose.Types.ObjectId.isValid(objectId);
 }
