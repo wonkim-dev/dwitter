@@ -16,6 +16,8 @@ import {
 // Connect to testDB
 connectDB(true);
 
+const invalidObjectId = "invalidObjectId";
+
 // Initialize users collection before each test
 beforeEach(async () => {
   await initializeDBForTweetTest();
@@ -171,26 +173,20 @@ describe("GET /tweets/:id", () => {
   });
 
   describe("Request with invalid info", () => {
-    test("Should fail to get a tweet with non-existing id (browser clients)", async () => {
-      const response = await request(app)
-        .get("/tweets/falseTweetId12345")
+    test("Should fail to get a tweet with invalid tweet id (browser clients)", async () => {
+      await request(app)
+        .get(`/tweets/${invalidObjectId}`)
         .set("Cookie", [`token=${userOneToken}`])
         .send()
         .expect(404);
-      expect(response.body).toEqual({
-        message: `Tweet id(falseTweetId12345) not found`,
-      });
     });
 
-    test("Should fail to get a tweet with non-existing id (non-browser clients)", async () => {
-      const response = await request(app)
-        .get("/tweets/falseTweetId12345")
+    test("Should fail to get a tweet with invalid tweet id (non-browser clients)", async () => {
+      await request(app)
+        .get(`/tweets/${invalidObjectId}`)
         .set("Authorization", `Bearer ${userOneToken}`)
         .send()
         .expect(404);
-      expect(response.body).toEqual({
-        message: `Tweet id(falseTweetId12345) not found`,
-      });
     });
   });
 });
@@ -243,7 +239,7 @@ describe("PUT /tweets/:id", () => {
 
     test("Should fail to update a tweet with invalid tweet id (browser clients)", async () => {
       await request(app)
-        .put("/tweets/wrongTweetId1234")
+        .put(`/tweets/${invalidObjectId}`)
         .set("dwitter-csrf-token", CSRFToken)
         .set("Cookie", [`token=${userOneToken}`])
         .send({ text: "Updated Tweet!" })
@@ -294,7 +290,7 @@ describe("DELETE /tweets/:id", () => {
 
     test("Should fail to delete a tweet with invalid tweet id (browser clients)", async () => {
       await request(app)
-        .delete("/tweets/wrongTweetId1234")
+        .delete(`/tweets/${invalidObjectId}`)
         .set("dwitter-csrf-token", CSRFToken)
         .set("Cookie", [`token=${userOneToken}`])
         .send()
@@ -355,6 +351,103 @@ describe("POST tweets/:id/comments", () => {
           }),
         ])
       );
+    });
+  });
+
+  describe("Request with invalid info", () => {
+    test("Should fail to create a new comment with invalid JWT token", async () => {
+      const response = await request(app)
+        .post(`/tweets/${tweetOne.id}/comments`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", ["token=invalidToken"])
+        .send({ text: "This is new comment!" })
+        .expect(401);
+      expect(response.body).toEqual({ message: "Authentication Error" });
+    });
+
+    test("Should fail to create a new comment with invalid tweet id", async () => {
+      await request(app)
+        .post(`/tweets/${invalidObjectId}/comments`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "This is new comment!" })
+        .expect(404);
+    });
+
+    test("Should fail to create a new comment with empty comment text", async () => {
+      const response = await request(app)
+        .post(`/tweets/${tweetOne.id}/comments`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "" })
+        .expect(400);
+      expect(response.body).toEqual({
+        message: "text should be at least 3 characters.",
+      });
+    });
+  });
+});
+
+describe("PUT tweets/:id/comments/:commentId", () => {
+  describe("Request with valid credentials", () => {
+    test("Should update an existing comment (browser clients)", async () => {
+      const response = await request(app)
+        .put(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "This is updated comment!" })
+        .expect(200);
+      expect(response.body).toHaveProperty("id", tweetOne.id);
+      expect(response.body).toHaveProperty("username", userOne.username);
+      expect(response.body.comments).toHaveLength(1);
+      expect(response.body.comments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: "This is updated comment!",
+            userId: userOneId,
+            username: userOne.username,
+          }),
+        ])
+      );
+    });
+  });
+
+  describe("Request with invalid info", () => {
+    test("Should fail to update an existing comment with invalid JWT token", async () => {
+      const response = await request(app)
+        .put(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", ["token=invalidToken"])
+        .send({ text: "This is updated comment!" })
+        .expect(401);
+      expect(response.body).toEqual({ message: "Authentication Error" });
+    });
+
+    test("Should fail to update an existing comment with invalid tweet id", async () => {
+      await request(app)
+        .put(`/tweets/${invalidObjectId}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "This is new comment!" })
+        .expect(404);
+    });
+
+    test("Should fail to update an existing comment with invalid comment id", async () => {
+      await request(app)
+        .put(`/tweets/${tweetOne.id}/comments/${invalidObjectId}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send({ text: "This is updated comment!" })
+        .expect(404);
+    });
+
+    test("Should fail to update an existing comment with JWT token of other users", async () => {
+      await request(app)
+        .put(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userTwoToken}`])
+        .send({ text: "This is updated comment!" })
+        .expect(403);
     });
   });
 });
