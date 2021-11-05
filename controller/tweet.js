@@ -101,7 +101,7 @@ export async function updateComment(req, res) {
     return res.sendStatus(404);
   }
 
-  const comment = tweetRepository.getCommentById(tweet, commentId);
+  const comment = await tweetRepository.getCommentById(tweet, commentId);
   if (!comment) {
     return res.sendStatus(404);
   }
@@ -119,13 +119,29 @@ export async function updateComment(req, res) {
 }
 
 export async function deleteComment(req, res) {
-  const tweet = await tweetRepository.getById(req.params.id);
+  const tweetId = req.params.id;
+  const commentId = req.params.commentId;
+
+  const tweetIsValid = tweetRepository.validateObjectId(tweetId);
+  const commentIsValid = tweetRepository.validateObjectId(commentId);
+  if (!tweetIsValid || !commentIsValid) {
+    return res.sendStatus(404);
+  }
+
+  const tweet = await tweetRepository.getById(tweetId);
   if (!tweet) {
     return res.sendStatus(404);
   }
-  const deleted = await tweetRepository.deleteCommentById(
-    req.params.id,
-    req.params.commentId
-  );
+
+  const comment = await tweetRepository.getCommentById(tweet, commentId);
+  if (!comment) {
+    return res.sendStatus(404);
+  }
+
+  if (comment.userId !== req.userId) {
+    return res.sendStatus(403);
+  }
+
+  const deleted = await tweetRepository.deleteCommentById(tweetId, commentId);
   res.status(200).json(deleted);
 }

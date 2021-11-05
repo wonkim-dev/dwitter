@@ -108,10 +108,11 @@ export async function deleteCommentById(id, commentId) {
   );
 }
 
-export function getCommentById(tweet, commentId) {
-  return tweet.comments.filter((comment) => {
+export async function getCommentById(tweet, commentId) {
+  const comment = tweet.comments.filter((comment) => {
     return Mongoose.Types.ObjectId(comment._id).toString() === commentId;
   })[0];
+  return comment;
 }
 
 export function validateObjectId(objectId) {

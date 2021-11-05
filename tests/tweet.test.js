@@ -452,6 +452,73 @@ describe("PUT tweets/:id/comments/:commentId", () => {
   });
 });
 
+describe("DELETE tweets/:id/comments/:commentId", () => {
+  describe("Request with valid credentials", () => {
+    test("Should delete a comment (browser clients)", async () => {
+      const response = await request(app)
+        .delete(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send()
+        .expect(200);
+      expect(response.body).toHaveProperty("username", userOne.username);
+      expect(response.body.comments).toHaveLength(0);
+    });
+
+    test("Should delete a comment (non-browser clients)", async () => {
+      const response = await request(app)
+        .delete(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Authorization", `Bearer ${userOneToken}`)
+        .send()
+        .expect(200);
+      expect(response.body).toHaveProperty("username", userOne.username);
+      expect(response.body.comments).toHaveLength(0);
+    });
+  });
+
+  describe("Request with invalid info", () => {
+    test("Should fail to delete an existing comment with invalid JWT token", async () => {
+      const response = await request(app)
+        .delete(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", ["token=invalidToken"])
+        .send()
+        .expect(401);
+      expect(response.body).toEqual({ message: "Authentication Error" });
+    });
+
+    test("Should fail to delete an existing comment with invalid tweet id", async () => {
+      await request(app)
+        .delete(
+          `/tweets/${invalidObjectId}/comments/${tweetOne.comments[0]._id}`
+        )
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send()
+        .expect(404);
+    });
+
+    test("Should fail to delete an existing comment with invalid comment id", async () => {
+      await request(app)
+        .delete(`/tweets/${tweetOne.id}/comments/${invalidObjectId}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userOneToken}`])
+        .send()
+        .expect(404);
+    });
+
+    test("Should fail to delete an existing comment with JWT token of other users", async () => {
+      await request(app)
+        .delete(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
+        .set("dwitter-csrf-token", CSRFToken)
+        .set("Cookie", [`token=${userTwoToken}`])
+        .send()
+        .expect(403);
+    });
+  });
+});
+
 // Disconnect DB
 afterAll(async () => {
   Mongoose.connection.close();
