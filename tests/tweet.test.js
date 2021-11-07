@@ -8,7 +8,6 @@ import {
   userOne,
   userOneToken,
   tweetOne,
-  userTwo,
   userTwoToken,
   userOneId,
 } from "./fixtures/db.js";
@@ -16,6 +15,8 @@ import {
 // Connect to testDB
 connectDB(true);
 
+const invalidToken = "invalidToken";
+const invalidCSRFToken = "invalidCSRFToken";
 const invalidObjectId = "invalidObjectId";
 
 // Initialize users collection before each test
@@ -48,11 +49,11 @@ describe("GET /tweets", () => {
     });
   });
 
-  describe("Request with invalid credentials", () => {
+  describe("Request with invalid info", () => {
     test("Should fail to get the recent 20 tweets with invalid JWT token (browser clients)", async () => {
       const response = await request(app)
         .get("/tweets")
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", [`token=${invalidToken}`])
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -61,7 +62,7 @@ describe("GET /tweets", () => {
     test("Should fail to get the recent 20 tweets with invalid JWT token (non-browser clients)", async () => {
       const response = await request(app)
         .get("/tweets")
-        .set("Authorization", "Bearer invalidToken")
+        .set("Authorization", `Bearer ${invalidToken}`)
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -94,12 +95,12 @@ describe("POST /tweets", () => {
     });
   });
 
-  describe("Request with invalid credentials", () => {
+  describe("Request with invalid info", () => {
     test("Should fail to create a new tweet with invalid JWT token (browser clients)", async () => {
       const response = await request(app)
         .post("/tweets")
         .set("dwitter-csrf-token", CSRFToken)
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", [`token=${invalidToken}`])
         .send({ text: "New tweet!" })
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -109,7 +110,7 @@ describe("POST /tweets", () => {
       const response = await request(app)
         .post("/tweets")
         .set("dwitter-csrf-token", CSRFToken)
-        .set("Authorization", "Bearer invalidToken")
+        .set("Authorization", `Bearer ${invalidToken}`)
         .send({ text: "New tweet!" })
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -128,7 +129,7 @@ describe("POST /tweets", () => {
     test("Should fail to create a new tweet with invalid CSRF token (non-browser clients)", async () => {
       const response = await request(app)
         .post("/tweets")
-        .set("dwitter-csrf-token", "wrongCSRFToken")
+        .set("dwitter-csrf-token", invalidCSRFToken)
         .set("Authorization", `Bearer ${userOneToken}`)
         .send({ text: "New tweet!" })
         .expect(403);
@@ -219,7 +220,7 @@ describe("PUT /tweets/:id", () => {
   });
 
   describe("Request with invalid info", () => {
-    test("Should fail to update a tweet with unauthorized JWT token (browser clients)", async () => {
+    test("Should fail to update a tweet with JWT token of other users (browser clients)", async () => {
       await request(app)
         .put(`/tweets/${tweetOne.id}`)
         .set("dwitter-csrf-token", CSRFToken)
@@ -228,7 +229,7 @@ describe("PUT /tweets/:id", () => {
         .expect(403);
     });
 
-    test("Should fail to update a tweet with unauthorized JWT token (non-browser clients)", async () => {
+    test("Should fail to update a tweet with JWT token of other users (non-browser clients)", async () => {
       await request(app)
         .put(`/tweets/${tweetOne.id}`)
         .set("dwitter-csrf-token", CSRFToken)
@@ -270,7 +271,7 @@ describe("DELETE /tweets/:id", () => {
   });
 
   describe("Request with invalid info", () => {
-    test("Should fail to delete a tweet with unauthorized JWT token (browser clients)", async () => {
+    test("Should fail to delete a tweet with JWT token of other users (browser clients)", async () => {
       await request(app)
         .delete(`/tweets/${tweetOne.id}`)
         .set("dwitter-csrf-token", CSRFToken)
@@ -279,7 +280,7 @@ describe("DELETE /tweets/:id", () => {
         .expect(403);
     });
 
-    test("Should fail to delete a tweet with unauthorized JWT token (non-browser clients)", async () => {
+    test("Should fail to delete a tweet with JWT token of other users (non-browser clients)", async () => {
       await request(app)
         .delete(`/tweets/${tweetOne.id}`)
         .set("dwitter-csrf-token", CSRFToken)
@@ -359,7 +360,7 @@ describe("POST tweets/:id/comments", () => {
       const response = await request(app)
         .post(`/tweets/${tweetOne.id}/comments`)
         .set("dwitter-csrf-token", CSRFToken)
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", `token=${invalidToken}`)
         .send({ text: "This is new comment!" })
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -417,7 +418,7 @@ describe("PUT tweets/:id/comments/:commentId", () => {
       const response = await request(app)
         .put(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
         .set("dwitter-csrf-token", CSRFToken)
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", [`token=${invalidToken}`])
         .send({ text: "This is updated comment!" })
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -482,7 +483,7 @@ describe("DELETE tweets/:id/comments/:commentId", () => {
       const response = await request(app)
         .delete(`/tweets/${tweetOne.id}/comments/${tweetOne.comments[0]._id}`)
         .set("dwitter-csrf-token", CSRFToken)
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", [`token=${invalidToken}`])
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });

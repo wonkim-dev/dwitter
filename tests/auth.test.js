@@ -12,6 +12,9 @@ import {
 // Connect to testDB
 connectDB(true);
 
+const invalidToken = "invalidToken";
+const invalidCSRFToken = "invalidCSRFToken";
+
 const dummyUser = {
   username: "dummyUser",
   password: "passwordDummy",
@@ -36,7 +39,7 @@ describe("GET /auth/csrf-token", () => {
 });
 
 describe("GET /auth/me", () => {
-  describe("Request with correct credentials", () => {
+  describe("Request with valid credentials", () => {
     test("Should get me successfully (browser clients)", async () => {
       const response = await request(app)
         .get("/auth/me")
@@ -66,7 +69,7 @@ describe("GET /auth/me", () => {
     test("Should fail to get me with invalid JWT token (browser clients)", async () => {
       const response = await request(app)
         .get("/auth/me")
-        .set("Cookie", ["token=invalidToken"])
+        .set("Cookie", [`token=${invalidToken}`])
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -75,7 +78,7 @@ describe("GET /auth/me", () => {
     test("Should fail to get me with invalid JWT token (non-browser clients)", async () => {
       const response = await request(app)
         .get("/auth/me")
-        .set("Authorization", "Bearer invalidToken")
+        .set("Authorization", `Bearer ${invalidToken}`)
         .send()
         .expect(401);
       expect(response.body).toEqual({ message: "Authentication Error" });
@@ -89,7 +92,7 @@ describe("GET /auth/me", () => {
 });
 
 describe("POST /auth/signup", () => {
-  describe("Signup with correct data", () => {
+  describe("Request with valid credentials", () => {
     test("Should create a user successfully", async () => {
       const response = await request(app)
         .post("/auth/signup")
@@ -101,7 +104,7 @@ describe("POST /auth/signup", () => {
     });
   });
 
-  describe("Signup with incomplete data", () => {
+  describe("Request with invalid info", () => {
     test("Should fail to create a user with empty username", async () => {
       const response = await request(app)
         .post("/auth/signup")
@@ -160,7 +163,7 @@ describe("POST /auth/signup", () => {
 });
 
 describe("POST /auth/login", () => {
-  describe("Login with correct credentials", () => {
+  describe("Request with valid credentials", () => {
     test("Should log in successfully", async () => {
       const response = await request(app)
         .post("/auth/login")
@@ -174,7 +177,7 @@ describe("POST /auth/login", () => {
     });
   });
 
-  describe("Login with invalid credentials", () => {
+  describe("Request with invalid info", () => {
     test("Should fail to login with non-existing username", async () => {
       const response = await request(app)
         .post("/auth/login")
@@ -213,7 +216,7 @@ describe("POST /auth/login", () => {
     test("Should fail to login with invalid CSRF token", async () => {
       const response = await request(app)
         .post("/auth/login")
-        .set("dwitter-csrf-token", "wrongCSRFToken")
+        .set("dwitter-csrf-token", invalidCSRFToken)
         .send({
           username: userOne.username,
           password: userOne.password,
@@ -242,7 +245,7 @@ describe("POST /auth/logout", () => {
   test("should fail to logout with invalid CSRF token", async () => {
     const response = await request(app)
       .post("/auth/logout")
-      .set("dwitter-csrf-token", "wrongCSRFToken")
+      .set("dwitter-csrf-token", invalidCSRFToken)
       .send()
       .expect(403);
     expect(response.body).toEqual({ message: "Failed CSRF check" });
