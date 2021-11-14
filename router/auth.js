@@ -4,6 +4,7 @@ import { body } from "express-validator";
 import * as authController from "../controller/auth.js";
 import { validate } from "../middleware/validator.js";
 import { isAuth } from "../middleware/auth.js";
+import { uploadAvatar } from "../middleware/uploader.js";
 
 const router = express.Router();
 
@@ -35,6 +36,16 @@ router.post("/signup", validateSignup, authController.signup);
 router.post("/login", validateCredential, authController.login);
 
 router.post("/logout", authController.logout);
+
+router.post(
+  "/avatar",
+  isAuth,
+  uploadAvatar,
+  authController.uploadAvatarFile,
+  (err, req, res, next) => {
+    res.status(400).json({ message: err.message });
+  }
+);
 
 router.get("/me", isAuth, authController.me);
 

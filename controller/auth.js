@@ -46,6 +46,11 @@ export async function logout(req, res, next) {
   res.status(200).json({ message: "User has been logged out" });
 }
 
+export async function uploadAvatarFile(req, res) {
+  // TODO: store buffer of the image file into users collection
+  res.status(200).json({ file: req.file });
+}
+
 export async function me(req, res) {
   const user = await userRepository.findById(req.userId);
   if (!user) {
