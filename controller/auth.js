@@ -47,8 +47,9 @@ export async function logout(req, res, next) {
 }
 
 export async function uploadAvatarFile(req, res) {
-  // TODO: store buffer of the image file into users collection
-  res.status(200).json({ file: req.file });
+  const imgBuffer = req.file.buffer;
+  const updated = await userRepository.uploadAvatar(req.userId, imgBuffer);
+  res.status(200).json(updated);
 }
 
 export async function me(req, res) {

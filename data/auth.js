@@ -7,6 +7,7 @@ const userSchema = new Mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   url: String,
+  avatar: { type: Buffer },
 });
 
 useVirtualId(userSchema);
@@ -22,4 +23,12 @@ export async function findByUsername(username) {
 
 export async function findById(id) {
   return User.findById(id);
+}
+
+export async function uploadAvatar(userId, imgBuffer) {
+  return User.findByIdAndUpdate(
+    userId,
+    { avatar: imgBuffer },
+    { returnOriginal: false }
+  );
 }
