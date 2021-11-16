@@ -47,6 +47,8 @@ router.post(
   }
 );
 
+router.delete("/avatar", isAuth, authController.deleteAvatarFile);
+
 router.get("/me", isAuth, authController.me);
 
 router.get("/csrf-token", authController.csrfToken);

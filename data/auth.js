@@ -32,3 +32,11 @@ export async function uploadAvatar(userId, imgBuffer) {
     { returnOriginal: false }
   );
 }
+
+export async function deleteAvatar(userId) {
+  return User.findByIdAndUpdate(
+    userId,
+    { avatar: null },
+    { returnOriginal: false }
+  );
+}

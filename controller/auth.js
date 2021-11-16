@@ -52,6 +52,15 @@ export async function uploadAvatarFile(req, res) {
   res.status(200).json(updated);
 }
 
+export async function deleteAvatarFile(req, res) {
+  const user = await userRepository.findById(req.userId);
+  if (!user) {
+    return res.status(404).json({ message: "user not found" });
+  }
+  await userRepository.deleteAvatar(req.userId);
+  res.sendStatus(200);
+}
+
 export async function me(req, res) {
   const user = await userRepository.findById(req.userId);
   if (!user) {
