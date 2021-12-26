@@ -9,6 +9,8 @@ import authRouter from "./router/auth.js";
 import { config } from "./config.js";
 import { csrfCheck } from "./middleware/csrf.js";
 import rateLimit from "./middleware/rate-limiter.js";
+import { TweetController } from "./controller/tweet.js";
+import * as tweetRepository from "./data/tweet.js";
 
 const app = express();
 
@@ -26,7 +28,7 @@ app.use(morgan("tiny"));
 app.use(rateLimit);
 
 app.use(csrfCheck);
-app.use("/tweets", tweetsRouter);
+app.use("/tweets", tweetsRouter(new TweetController(tweetRepository)));
 app.use("/auth", authRouter);
 
 // Handle requests that have not been captured up to this.

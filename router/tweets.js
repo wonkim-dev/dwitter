@@ -1,7 +1,6 @@
 import express from "express";
 import "express-async-errors";
 import { body } from "express-validator";
-import * as tweetController from "../controller/tweet.js";
 import { isAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validator.js";
 
@@ -15,34 +14,34 @@ const validateText = [
   validate,
 ];
 
-router.get("/", isAuth, tweetController.getTweets);
+export default function tweetsRouter(tweetController) {
+  router.get("/", isAuth, tweetController.getTweets);
 
-router.get("/:id", isAuth, tweetController.getTweet);
+  router.get("/:id", isAuth, tweetController.getTweet);
 
-router.post("/", isAuth, validateText, tweetController.createTweet);
+  router.post("/", isAuth, validateText, tweetController.createTweet);
 
-router.put("/:id", isAuth, validateText, tweetController.updateTweet);
+  router.put("/:id", isAuth, validateText, tweetController.updateTweet);
 
-router.delete("/:id", isAuth, tweetController.deleteTweet);
+  router.delete("/:id", isAuth, tweetController.deleteTweet);
 
-router.post(
-  "/:id/comments",
-  isAuth,
-  validateText,
-  tweetController.createComment
-);
+  router.post(
+    "/:id/comments",
+    isAuth,
+    validateText,
+    tweetController.createComment
+  );
 
-router.put(
-  "/:id/comments/:commentId",
-  isAuth,
-  validateText,
-  tweetController.updateComment
-);
+  router.put(
+    "/:id/comments/:commentId",
+    isAuth,
+    validateText,
+    tweetController.updateComment
+  );
 
-router.delete(
-  "/:id/comments/:commentId",
-  isAuth,
-  tweetController.deleteComment
-);
-
-export default router;
+  router.delete(
+    "/:id/comments/:commentId",
+    isAuth,
+    tweetController.deleteComment
+  );
+}
