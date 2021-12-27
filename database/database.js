@@ -1,16 +1,12 @@
 import Mongoose from "mongoose";
 import { config } from "../config.js";
 
-export async function connectDB(test = false) {
+export async function connectDB() {
   const option = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
   };
-
-  if (test) {
-    return Mongoose.connect(config.db.hostTest, option);
-  }
 
   return Mongoose.connect(config.db.host, option);
 }

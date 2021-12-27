@@ -44,4 +44,6 @@ export default function tweetsRouter(tweetController) {
     isAuth,
     tweetController.deleteComment
   );
+
+  return router;
 }
