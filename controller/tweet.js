@@ -62,7 +62,7 @@ export class TweetController {
     if (!tweet) {
       return res.sendStatus(404);
     }
-    if (req.userId !== tweets.userId) {
+    if (req.userId !== tweet.userId) {
       return res.sendStatus(403);
     }
     await this.tweets.remove(id);
